@@ -15,3 +15,4 @@ tour <- mutate(tour, Year = as.double(Year))
 data <- full_join(data, tour, by = c("Country", "Year"))
 
 write_csv(data, "data.csv")
+

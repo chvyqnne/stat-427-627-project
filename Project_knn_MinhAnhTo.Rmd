@@ -1,0 +1,495 @@
+---
+title: "Project KNN"
+author: "Minh Anh To"
+course: "STAT-627"
+date: "4/20/2023"
+output:
+  html_document:
+    toc: yes
+    toc_depth: '2'
+    df_print: paged
+    fontsize: 16pt
+---
+
+```{r}
+library(tidyverse)
+```
+
+- Load Dataset  
+
+```{r}
+knn_data <- read.csv("C:\\StudyDocuments\\American University\\STAT-627\\stat-427-627-project\\data\\data.csv")
+head(knn_data,5)
+```
+- Select only columns needed
+
+```{r}
+knn_data1 <- knn_data[, c(1,6,9:12,14:17,19:21,24:28,30,32,33,35,39,41:44,45,52:56)]
+knn_data2 <- knn_data[, c(1,6,8,13,18,23,29,40,45,51,56)]
+head(knn_data2,5)
+```
+
+```{r}
+library(class)
+library(caret)
+library(tidyverse)
+
+knn_data2%>%
+  filter(knn_data2$Year==2018) ->knn_data18
+
+# Remove rows with missing values
+data <- na.omit(knn_data18)
+response_variable <- "Total.thousands."
+
+# Scale the independent variables (columns 3 to 10)
+data_scaled <- data
+data_scaled[, 3:10] <- scale(data[, 3:10])
+
+# Convert the response variable to a factor variable with 4 levels based on its quartiles
+labels <- c("Low", "LowMedium", "HighMedium", "High")
+data[[response_variable]] <- cut(data[[response_variable]], breaks = quantile(data[[response_variable]], probs = c(0, 0.25, 0.5, 0.75, 1)), labels = labels, include.lowest = TRUE)
+
+# Create a partition with a 60-30 split
+set.seed(123)
+train_rows <- sample(1:nrow(data), size = floor(0.6 * nrow(data)))
+train_data <- data[train_rows, ]
+test_data <- data[-train_rows, ]
+
+# Create scaled train and test datasets for the independent variables
+train_data_scaled <- data_scaled[train_rows, ]
+test_data_scaled <- data_scaled[-train_rows, ]
+
+# Initialize a results data frame
+results <- data.frame(K_Value = integer(), Accuracy = numeric())
+
+# Iterate through k values from 1 to 50
+for (k_value in 1:50) {
+  
+  # Run KNN with the current independent variables
+  knn_model <- knn(train_data_scaled[, 3:10], test_data_scaled[, 3:10], train_data[[response_variable]], k = k_value, use.all = TRUE)
+    
+  # Evaluate the model performance
+  confusion_matrix <- table(Predicted = knn_model, Actual = test_data[[response_variable]])
+  accuracy <- sum(diag(confusion_matrix)) / sum(confusion_matrix)
+    
+  # Add the k value and accuracy to the results data frame
+  results <- rbind(results, data.frame(K_Value = k_value, Accuracy = accuracy))
+}
+
+# Print the results table
+print(head(results,5))
+
+# Find the k value with the highest accuracy
+highest_k <- which.max(results$Accuracy)
+
+# Print the optimal k value
+cat("Optimal k value:", results$K_Value[highest_k], "with highest accuracy:", results$Accuracy[highest_k])
+
+# Create a plot of accuracy by k value
+ggplot(results, aes(x = K_Value, y = Accuracy)) +
+  geom_line() +
+  geom_point() +
+  ggtitle("Accuracy by k value") +
+  xlab("k value") +
+  ylab("Accuracy") +
+  theme_minimal()
+
+```
+
+
+```{r}
+# Load required libraries
+library(MASS)
+library(caret)
+
+# Remove rows with missing values
+data <- na.omit(knn_data18)
+
+# Replace 'response_variable' with your actual variable name
+response_variable <- "Total.thousands."
+
+# Scale the independent variables (columns 3 to 10)
+data_scaled <- data
+data_scaled[, 3:10] <- scale(data[, 3:10])
+
+# Convert the response variable to a factor variable with 3 levels based on its quartiles
+labels <- c("Low", "Medium","High")
+data[[response_variable]] <- cut(data[[response_variable]], breaks = quantile(data[[response_variable]], probs = c(0, 0.33,0.66, 1)), labels = labels, include.lowest = TRUE)
+
+# Set seed for reproducibility
+set.seed(123)
+
+# Create a 60-40 split
+train_indices <- createDataPartition(data[[response_variable]], p = 0.6, list = FALSE)
+train_data <- data[train_indices, ]
+test_data <- data[-train_indices, ]
+
+# LDA model
+lda_model <- lda(train_data[[response_variable]] ~ ., data = train_data[, 3:10])
+lda_predictions <- predict(lda_model, test_data[, 3:10])$class
+
+# Calculate LDA accuracy
+lda_cm <- table(Predicted = lda_predictions, Actual = test_data[[response_variable]])
+lda_accuracy <- sum(diag(lda_cm)) / sum(lda_cm)
+cat("LDA accuracy:", lda_accuracy, "\n")
+
+# QDA model
+qda_model <- qda(train_data[[response_variable]] ~ ., data = train_data[, 3:10])
+qda_predictions <- predict(qda_model, test_data[, 3:10])$class
+
+# Calculate QDA accuracy
+qda_cm <- table(Predicted = qda_predictions, Actual = test_data[[response_variable]])
+qda_accuracy <- sum(diag(qda_cm)) / sum(qda_cm)
+cat("QDA accuracy:", qda_accuracy, "\n")
+```
+```{r}
+lda_model
+```
+
+
+```{r}
+knn_data2%>%
+  filter(knn_data2$Year==2019) ->knn_data19
+
+# Remove rows with missing values
+data <- na.omit(knn_data19)
+
+response_variable <- "Total.thousands."
+
+# Scale the independent variables (columns 3 to 10)
+data_scaled <- data
+data_scaled[, 3:10] <- scale(data[, 3:10])
+
+# Convert the response variable to a factor variable with 4 levels based on its quartiles
+labels <- c("Low", "LowMedium", "HighMedium", "High")
+data[[response_variable]] <- cut(data[[response_variable]], breaks = quantile(data[[response_variable]], probs = c(0, 0.25, 0.5, 0.75, 1)), labels = labels, include.lowest = TRUE)
+
+# Create a partition with a 60-30 split
+set.seed(123)
+train_rows <- sample(1:nrow(data), size = floor(0.6 * nrow(data)))
+train_data <- data[train_rows, ]
+test_data <- data[-train_rows, ]
+
+# Create scaled train and test datasets for the independent variables
+train_data_scaled <- data_scaled[train_rows, ]
+test_data_scaled <- data_scaled[-train_rows, ]
+
+# Initialize a results data frame
+results <- data.frame(K_Value = integer(), Accuracy = numeric())
+
+# Iterate through k values from 1 to 50
+for (k_value in 1:50) {
+  
+  # Run KNN with the current independent variables
+  knn_model <- knn(train_data_scaled[, 3:10], test_data_scaled[, 3:10], train_data[[response_variable]], k = k_value, use.all = TRUE)
+    
+  # Evaluate the model performance
+  confusion_matrix <- table(Predicted = knn_model, Actual = test_data[[response_variable]])
+  accuracy <- sum(diag(confusion_matrix)) / sum(confusion_matrix)
+    
+  # Add the k value and accuracy to the results data frame
+  results <- rbind(results, data.frame(K_Value = k_value, Accuracy = accuracy))
+}
+
+# Print the results table
+print(results)
+
+# Find the k value with the highest accuracy
+highest_k <- which.max(results$Accuracy)
+
+# Print the optimal k value
+cat("Optimal k value:", results$K_Value[highest_k], "with highest accuracy:", results$Accuracy[highest_k])
+
+# Create a plot of accuracy by k value
+ggplot(results, aes(x = K_Value, y = Accuracy)) +
+  geom_line() +
+  geom_point() +
+  ggtitle("Accuracy by k value") +
+  xlab("k value") +
+  ylab("Accuracy") +
+  theme_minimal()
+
+```
+```{r}
+# Remove rows with missing values
+data <- na.omit(knn_data19)
+
+response_variable <- "Total.thousands."
+
+# Scale the independent variables (columns 3 to 10)
+data_scaled <- data
+data_scaled[, 3:10] <- scale(data[, 3:10])
+
+# Convert the response variable to a factor variable with 3 levels based on its quartiles
+labels <- c("Low", "Medium", "High")
+data[[response_variable]] <- cut(data[[response_variable]], breaks = quantile(data[[response_variable]], probs = c(0, 0.33, 0.66, 1)), labels = labels, include.lowest = TRUE)
+
+# Set seed for reproducibility
+set.seed(123)
+
+# Create a 60-40 split
+train_indices <- createDataPartition(data[[response_variable]], p = 0.6, list = FALSE)
+train_data <- data[train_indices, ]
+test_data <- data[-train_indices, ]
+
+# LDA model
+lda_model <- lda(train_data[[response_variable]] ~ ., data = train_data[, 3:10])
+lda_predictions <- predict(lda_model, test_data[, 3:10])$class
+
+# Calculate LDA accuracy
+lda_cm <- table(Predicted = lda_predictions, Actual = test_data[[response_variable]])
+lda_accuracy <- sum(diag(lda_cm)) / sum(lda_cm)
+cat("LDA accuracy:", lda_accuracy, "\n")
+
+# QDA model
+qda_model <- qda(train_data[[response_variable]] ~ ., data = train_data[, 3:10])
+qda_predictions <- predict(qda_model, test_data[, 3:10])$class
+
+# Calculate QDA accuracy
+qda_cm <- table(Predicted = qda_predictions, Actual = test_data[[response_variable]])
+qda_accuracy <- sum(diag(qda_cm)) / sum(qda_cm)
+cat("QDA accuracy:", qda_accuracy, "\n")
+```
+```{r}
+lda_model
+```
+
+```{r}
+knn_data2%>%
+  filter(knn_data2$Year==2020) ->knn_data20
+
+# Remove rows with missing values
+data <- na.omit(knn_data20)
+
+response_variable <- "Total.thousands."
+
+# Scale the independent variables (columns 3 to 10)
+data_scaled <- data
+data_scaled[, 3:10] <- scale(data[, 3:10])
+
+# Convert the response variable to a factor variable with 4 levels based on its quartiles
+labels <- c("Low", "LowMedium", "HighMedium", "High")
+data[[response_variable]] <- cut(data[[response_variable]], breaks = quantile(data[[response_variable]], probs = c(0, 0.25, 0.5, 0.75, 1)), labels = labels, include.lowest = TRUE)
+
+# Set seed for reproducibility
+set.seed(123)
+
+# Create a 10-fold cross-validation object
+folds <- createFolds(data[[response_variable]], k = 10, list = TRUE)
+
+# Initialize a results data frame
+results <- data.frame(K_Value = integer(), Avg_Accuracy = numeric())
+
+# Iterate through k values from 1 to 100
+for (k_value in 1:50) {
+  
+  fold_accuracies <- numeric()
+  
+  # Iterate through each fold
+  for (i in 1:length(folds)) {
+    test_rows <- folds[[i]]
+    train_rows <- setdiff(1:nrow(data), test_rows)
+    
+    train_data <- data[train_rows, ]
+    test_data <- data[test_rows, ]
+    
+    train_data_scaled <- data_scaled[train_rows, ]
+    test_data_scaled <- data_scaled[-train_rows, ]
+    
+    # Run KNN with the current independent variables
+    knn_model <- knn(train_data_scaled[, 3:10], test_data_scaled[, 3:10], train_data[[response_variable]], k = k_value, use.all = TRUE)
+    
+    # Evaluate the model performance
+    confusion_matrix <- table(Predicted = knn_model, Actual = test_data[[response_variable]])
+    accuracy <- sum(diag(confusion_matrix)) / sum(confusion_matrix)
+    
+    fold_accuracies <- c(fold_accuracies, accuracy)
+  }
+  
+  # Calculate the average accuracy across all folds
+  avg_accuracy <- mean(fold_accuracies)
+  
+  # Add the k value and average accuracy to the results data frame
+  results <- rbind(results, data.frame(K_Value = k_value, Avg_Accuracy = avg_accuracy))
+}
+
+# Print the results table
+print(results)
+
+# Find the k value with the highest average accuracy
+highest_k <- which.max(results$Avg_Accuracy)
+
+# Print the optimal k value
+cat("Optimal k value:", results$K_Value[highest_k], "with highest average accuracy:", results$Avg_Accuracy[highest_k])
+
+# Plot k versus accuracy using ggplot2
+ggplot(results, aes(x = K_Value, y = Avg_Accuracy)) +
+  geom_line() +
+  geom_point() +
+  labs(title = "K-value vs. Average Accuracy", x = "K-value", y = "Average Accuracy") +
+  theme_minimal()
+```
+
+```{r}
+# Remove rows with missing values
+data <- na.omit(knn_data20)
+
+response_variable <- "Total.thousands."
+
+# Scale the independent variables (columns 3 to 10)
+data_scaled <- data
+data_scaled[, 3:10] <- scale(data[, 3:10])
+
+# Convert the response variable to a factor variable with 3 levels based on its quartiles
+labels <- c("Low", "Medium", "High")
+data[[response_variable]] <- cut(data[[response_variable]], breaks = quantile(data[[response_variable]], probs = c(0, 0.33, 0.66, 1)), labels = labels, include.lowest = TRUE)
+
+# Set seed for reproducibility
+set.seed(123)
+
+# Create a 60-40 split
+train_indices <- createDataPartition(data[[response_variable]], p = 0.6, list = FALSE)
+train_data <- data[train_indices, ]
+test_data <- data[-train_indices, ]
+
+# LDA model
+lda_model <- lda(train_data[[response_variable]] ~ ., data = train_data[, 3:10])
+lda_predictions <- predict(lda_model, test_data[, 3:10])$class
+
+# Calculate LDA accuracy
+lda_cm <- table(Predicted = lda_predictions, Actual = test_data[[response_variable]])
+lda_accuracy <- sum(diag(lda_cm)) / sum(lda_cm)
+cat("LDA accuracy:", lda_accuracy, "\n")
+
+# QDA model
+qda_model <- qda(train_data[[response_variable]] ~ ., data = train_data[, 3:10])
+qda_predictions <- predict(qda_model, test_data[, 3:10])$class
+
+# Calculate QDA accuracy
+qda_cm <- table(Predicted = qda_predictions, Actual = test_data[[response_variable]])
+qda_accuracy <- sum(diag(qda_cm)) / sum(qda_cm)
+cat("QDA accuracy:", qda_accuracy, "\n")
+```
+```{r}
+lda_model
+```
+
+
+```{r}
+# Load required libraries
+knn_data2%>%
+  filter(knn_data2$Year==2021) ->knn_data21
+
+data <- na.omit(knn_data21)
+
+# Replace 'response_variable' with your actual variable name
+response_variable <- "Total.thousands."
+
+# Scale the independent variables (columns 3 to 10)
+data_scaled <- data
+data_scaled[, 3:10] <- scale(data[, 3:10])
+
+# Convert the response variable to a factor variable with 4 levels based on its quartiles
+labels <- c("Low", "LowMedium", "HighMedium", "High")
+data[[response_variable]] <- cut(data[[response_variable]], breaks = quantile(data[[response_variable]], probs = c(0, 0.25, 0.5, 0.75, 1)), labels = labels, include.lowest = TRUE)
+
+# Set seed for reproducibility
+set.seed(123)
+
+# Number of bootstrap samples
+n_bootstraps <- 10
+
+# Initialize a results data frame
+results <- data.frame(K_Value = integer(), Avg_Accuracy = numeric())
+
+# Iterate through k values from 1 to 100
+for (k_value in 1:50) {
+  
+  bootstrap_accuracies <- numeric()
+  
+  # Iterate through each bootstrap sample
+  for (i in 1:n_bootstraps) {
+    # Create bootstrap indices
+    bootstrap_indices <- sample(1:nrow(data), replace = TRUE)
+    
+    train_data <- data[bootstrap_indices, ]
+    test_data <- data[-bootstrap_indices, ]
+    
+    train_data_scaled <- data_scaled[bootstrap_indices, ]
+    test_data_scaled <- data_scaled[-bootstrap_indices, ]
+    
+    # Run KNN with the current independent variables
+    knn_model <- knn(train_data_scaled[, 3:10], test_data_scaled[, 3:10], train_data[[response_variable]], k = k_value, use.all = TRUE)
+    
+    # Evaluate the model performance
+    confusion_matrix <- table(Predicted = knn_model, Actual = test_data[[response_variable]])
+    accuracy <- sum(diag(confusion_matrix)) / sum(confusion_matrix)
+    
+    bootstrap_accuracies <- c(bootstrap_accuracies, accuracy)
+  }
+  
+  # Calculate the average accuracy across all bootstrap samples
+  avg_accuracy <- mean(bootstrap_accuracies)
+  
+  # Add the k value and average accuracy to the results data frame
+  results <- rbind(results, data.frame(K_Value = k_value, Avg_Accuracy = avg_accuracy))
+}
+
+# Print the results table
+print(results)
+
+# Find the k value with the highest average accuracy
+highest_k <- which.max(results$Avg_Accuracy)
+
+# Print the optimal k value
+cat("Optimal k value:", results$K_Value[highest_k], "with highest average accuracy:", results$Avg_Accuracy[highest_k])
+
+# Plot k versus accuracy using ggplot2
+ggplot(results, aes(x = K_Value, y = Avg_Accuracy)) +
+  geom_line() +
+  geom_point() +
+  labs(title = "K-value vs. Average Accuracy", x = "K-value", y = "Average Accuracy") +
+  theme_minimal()
+
+```
+```{r}
+# Remove rows with missing values
+data <- na.omit(knn_data21)
+
+response_variable <- "Total.thousands."
+
+# Scale the independent variables (columns 3 to 10)
+data_scaled <- data
+data_scaled[, 3:10] <- scale(data[, 3:10])
+
+# Convert the response variable to a factor variable with 3 levels based on its quartiles
+labels <- c("Low", "Medium", "High")
+data[[response_variable]] <- cut(data[[response_variable]], breaks = quantile(data[[response_variable]], probs = c(0, 0.33, 0.66, 1)), labels = labels, include.lowest = TRUE)
+
+# Set seed for reproducibility
+set.seed(123)
+
+# Create a 60-40 split
+train_indices <- createDataPartition(data[[response_variable]], p = 0.6, list = FALSE)
+train_data <- data[train_indices, ]
+test_data <- data[-train_indices, ]
+
+# LDA model
+lda_model <- lda(train_data[[response_variable]] ~ ., data = train_data[, 3:10])
+lda_predictions <- predict(lda_model, test_data[, 3:10])$class
+
+# Calculate LDA accuracy
+lda_cm <- table(Predicted = lda_predictions, Actual = test_data[[response_variable]])
+lda_accuracy <- sum(diag(lda_cm)) / sum(lda_cm)
+cat("LDA accuracy:", lda_accuracy, "\n")
+
+
+```
+
+```{r}
+lda_model
+```
+
+
+
+

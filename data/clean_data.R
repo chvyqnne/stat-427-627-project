@@ -79,3 +79,5 @@ data <- data %>%
          cruise = cruise * 1000,
          expenditures = expenditures * 1000)
 
+# save to new dataset
+write_csv(data, "data/clean_data.csv")

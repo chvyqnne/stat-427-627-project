@@ -1,7 +1,4 @@
 library(tidyverse)
-
-# merge data
-
 data <- read_csv("gender1.csv")
 data <- filter(data, Year > 1994)
 
@@ -18,6 +15,4 @@ tour <- mutate(tour, Year = as.double(Year))
 data <- full_join(data, tour, by = c("Country", "Year"))
 
 write_csv(data, "data.csv")
-
-data <- read_csv("data/data.csv")
 

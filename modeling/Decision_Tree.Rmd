@@ -1,0 +1,416 @@
+---
+title: "Decision_Tree"
+author: "Josephine Decker"
+date: "2023-04-30"
+output: pdf_document
+---
+```{r}
+library(tidyverse)
+library(MASS )
+library(tree)
+library(e1071)
+```
+
+### Let's read in the csv file
+```{r}
+project <- read_csv("../data/clean_data.csv")
+```
+
+
+```{r}
+data_18 <- project%>%
+  filter(Year == 2018)
+
+```
+
+```{r}
+data_19 <- project%>%
+  filter(Year == 2019)
+
+```
+
+```{r}
+data_20 <- project%>%
+  filter(Year == 2020)
+
+```
+
+```{r}
+data_21 <- project%>%
+  filter(Year == 2021)
+
+```
+
+```{r}
+summary(data_18$`Total(thousands)`)
+```
+
+
+### Adding in the new Column (target) for 2018
+
+```{r}
+data_18$T_rank <- as.factor(ifelse(data_18$`Total(thousands)` < 1806, 'Low',
+                     ifelse(data_18$`Total(thousands)` < 4393, 'LowMedium', 
+                     ifelse(data_18$`Total(thousands)` < 13879, 'HighMedium', 'High'))))
+
+
+data_18%>%
+  count(T_rank)
+
+```
+
+2019
+
+```{r}
+summary(data_19$`Total(thousands)`)
+```
+
+
+```{r}
+data_19$T_rank <- as.factor(ifelse(data_19$`Total(thousands)` < 2027, 'Low',
+                     ifelse(data_19$`Total(thousands)` < 4931, 'LowMedium', 
+                     ifelse(data_19$`Total(thousands)` < 14797, 'HighMedium', 'High'))))
+
+
+data_19%>%
+  count(T_rank)
+
+```
+
+2020
+
+```{r}
+summary(data_20$`Total(thousands)`)
+```
+
+```{r}
+data_20$T_rank <- as.factor(ifelse(data_20$`Total(thousands)` < 507, 'Low',
+                     ifelse(data_20$`Total(thousands)` < 1311, 'LowMedium', 
+                     ifelse(data_20$`Total(thousands)` < 3837, 'HighMedium', 'High'))))
+
+
+data_20%>%
+  count(T_rank)
+
+```
+
+2021
+
+```{r}
+summary(data_21$`Total(thousands)`)
+```
+
+```{r}
+data_21$T_rank <- as.factor(ifelse(data_21$`Total(thousands)` < 255.5, 'Low',
+                     ifelse(data_21$`Total(thousands)` < 826, 'LowMedium', 
+                     ifelse(data_21$`Total(thousands)` < 3265, 'HighMedium', 'High'))))
+
+
+data_21%>%
+  count(T_rank)
+
+```
+
+
+### Decision Tree
+
+#### 2018
+
+```{r}
+tr1 <- tree(as.factor(T_rank) ~MOBILITY + MARRIAGE + WORKPLACE + PAY + PARENTHOOD + ENTREPRENEURSHIP + ASSETS + PENSION  , data = data_18)
+plot(tr1)
+text(tr1)
+```
+
+```{r}
+tr1
+```
+
+```{r}
+summary(tr1)
+```
+
+```{r}
+ggplot(data_18, aes(MOBILITY, MARRIAGE, color = T_rank)) +
+  geom_jitter()
+```
+
+```{r}
+tr1a <- tree(as.factor(T_rank) ~MOBILITY + MARRIAGE, data = data_18)
+```
+
+
+```{r}
+plot(data_18$MOBILITY, data_18$MARRIAGE, col = as.factor(data_18$T_rank)) 
+partition.tree(tr1a, add = TRUE)
+```
+
+
+
+
+#### 2019
+
+```{r}
+tr2 <- tree(as.factor(T_rank) ~MOBILITY + MARRIAGE + WORKPLACE + PAY + PARENTHOOD + ENTREPRENEURSHIP + ASSETS + PENSION  , data = data_19)
+plot(tr2)
+text(tr2)
+```
+
+```{r}
+tr2
+```
+
+```{r}
+summary(tr2)
+```
+
+```{r}
+ggplot(data_19, aes(MOBILITY, MARRIAGE, color = T_rank)) +
+  geom_jitter()
+```
+
+```{r}
+tr2a <- tree(as.factor(T_rank) ~MOBILITY + MARRIAGE, data = data_19)
+```
+
+
+```{r}
+plot(data_19$MOBILITY, data_19$MARRIAGE, col = as.factor(data_19$T_rank)) 
+partition.tree(tr2a, add = TRUE)
+```
+
+
+
+#### 2020
+
+```{r}
+tr3 <- tree(as.factor(T_rank) ~MOBILITY + MARRIAGE + WORKPLACE + PAY + PARENTHOOD + ENTREPRENEURSHIP + ASSETS + PENSION  , data = data_20)
+plot(tr3)
+text(tr3)
+```
+
+```{r}
+tr3
+```
+
+```{r}
+summary(tr3)
+```
+
+```{r}
+ggplot(data_20, aes(WORKPLACE, PENSION, color = T_rank)) +
+  geom_jitter()
+```
+
+```{r}
+tr3a <- tree(as.factor(T_rank) ~WORKPLACE + PENSION, data = data_20)
+```
+
+
+```{r}
+plot(data_20$WORKPLACE, data_20$PENSION, col = as.factor(data_20$T_rank)) 
+partition.tree(tr3a, add = TRUE)
+```
+
+
+#### 2021
+
+```{r}
+tr4 <- tree(as.factor(T_rank) ~MOBILITY + MARRIAGE + WORKPLACE + PAY + PARENTHOOD + ENTREPRENEURSHIP + ASSETS + PENSION  , data = data_21)
+plot(tr4)
+text(tr4)
+```
+
+```{r}
+tr4
+```
+
+```{r}
+summary(tr4)
+```
+
+```{r}
+ggplot(data_21, aes(ENTREPRENEURSHIP, WORKPLACE, color = T_rank)) +
+  geom_jitter()
+```
+
+```{r}
+tr4a <- tree(as.factor(T_rank) ~MOBILITY + MARRIAGE, data = data_21)
+```
+
+
+```{r}
+plot(data_21$MOBILITY, data_21$MARRIAGE, col = as.factor(data_21$T_rank)) 
+partition.tree(tr4a, add = TRUE)
+```
+
+
+
+
+### Cross- Validation of Decisison Tree
+
+#### 2018
+
+```{r}
+set.seed(123)
+Z <-  sample(nrow(data_18), nrow(data_18)/2)
+tr <- tree(as.factor(T_rank) ~ MOBILITY + MARRIAGE + WORKPLACE + PAY + PARENTHOOD + ENTREPRENEURSHIP + ASSETS + PENSION, data = data_18, subset = Z)
+tr
+```
+
+```{r}
+plot(tr)
+text(tr)
+```
+
+```{r}
+Yhat = predict(tr, newdata = data_18[-Z,])
+summary(Yhat)
+```
+
+```{r}
+Yhat = predict(tr, newdata = data_18[-Z,], type = "class")
+summary(Yhat)
+```
+
+```{r}
+table(Yhat, data_18$T_rank[-Z])
+```
+
+```{r}
+(table(Yhat, data_18$T_rank[-Z])[1, 2] +
+    table(Yhat, data_18$T_rank[-Z])[2, 1]+
+   table(Yhat, data_18$T_rank[-Z])[3, 4]+
+   table(Yhat, data_18$T_rank[-Z])[4, 3]) / 
+  sum(table(Yhat, data_18$T_rank[-Z]))
+```
+
+```{r}
+mean(Yhat != data_18$T_rank[-Z]) 
+```
+
+```{r}
+
+```
+
+
+
+
+#### 2019
+
+```{r}
+set.seed(123)
+Z <-  sample(nrow(data_19), nrow(data_19)/2)
+tr <- tree(as.factor(T_rank) ~ MOBILITY + MARRIAGE + WORKPLACE + PAY + PARENTHOOD + ENTREPRENEURSHIP + ASSETS + PENSION, data = data_19, subset = Z)
+tr
+```
+
+```{r}
+plot(tr)
+text(tr)
+```
+
+```{r}
+Yhat = predict(tr, newdata = data_19[-Z,])
+summary(Yhat)
+```
+
+```{r}
+Yhat = predict(tr, newdata = data_19[-Z,], type = "class")
+summary(Yhat)
+```
+
+```{r}
+table(Yhat, data_19$T_rank[-Z])
+```
+
+```{r}
+(table(Yhat, data_19$T_rank[-Z])[1, 2] +
+    table(Yhat, data_19$T_rank[-Z])[2, 1]+
+   table(Yhat, data_19$T_rank[-Z])[3, 4]+
+   table(Yhat, data_19$T_rank[-Z])[4, 3]) / 
+  sum(table(Yhat, data_19$T_rank[-Z]))
+```
+
+
+#### 2020
+
+```{r}
+set.seed(123)
+Z <-  sample(nrow(data_20), nrow(data_20)/2)
+tr <- tree(as.factor(T_rank) ~ MOBILITY + MARRIAGE + WORKPLACE + PAY + PARENTHOOD + ENTREPRENEURSHIP + ASSETS + PENSION, data = data_20, subset = Z)
+tr
+```
+
+```{r}
+summary(tr)
+```
+
+```{r}
+plot(tr)
+text(tr)
+```
+
+```{r}
+Yhat = predict(tr, newdata = data_20[-Z,])
+summary(Yhat)
+```
+
+```{r}
+Yhat = predict(tr, newdata = data_20[-Z,], type = "class")
+summary(Yhat)
+```
+
+```{r}
+table(Yhat, data_20$T_rank[-Z])
+```
+
+```{r}
+(table(Yhat, data_20$T_rank[-Z])[1, 2] +
+    table(Yhat, data_20$T_rank[-Z])[2, 1]+
+   table(Yhat, data_20$T_rank[-Z])[3, 4]+
+   table(Yhat, data_20$T_rank[-Z])[4, 3]) / 
+  sum(table(Yhat, data_20$T_rank[-Z]))
+```
+
+
+#### 2021
+
+```{r}
+set.seed(123)
+Z <-  sample(nrow(data_21), nrow(data_21)/2)
+tr <- tree(as.factor(T_rank) ~ MOBILITY + MARRIAGE + WORKPLACE + PAY + PARENTHOOD + ENTREPRENEURSHIP + ASSETS + PENSION, data = data_21, subset = Z)
+tr
+```
+```{r}
+summary(tr)
+```
+
+
+```{r}
+plot(tr)
+text(tr)
+```
+
+```{r}
+Yhat = predict(tr, newdata = data_21[-Z,])
+summary(Yhat)
+```
+
+```{r}
+Yhat = predict(tr, newdata = data_21[-Z,], type = "class")
+summary(Yhat)
+```
+
+```{r}
+table(Yhat, data_21$T_rank[-Z])
+```
+
+```{r}
+(table(Yhat, data_21$T_rank[-Z])[1, 2] +
+    table(Yhat, data_21$T_rank[-Z])[2, 1]+
+   table(Yhat, data_21$T_rank[-Z])[3, 4]+
+   table(Yhat, data_21$T_rank[-Z])[4, 3]) / 
+  sum(table(Yhat, data_21$T_rank[-Z]))
+```
+

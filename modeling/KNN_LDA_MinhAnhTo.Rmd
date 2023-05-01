@@ -18,7 +18,7 @@ library(tidyverse)
 - Load Dataset  
 
 ```{r}
-knn_data <- read.csv("C:\\StudyDocuments\\American University\\STAT-627\\stat-427-627-project\\data\\data.csv")
+knn_data <- read.csv("../data/clean_data.csv")
 head(knn_data,5)
 ```
 - Select only columns needed

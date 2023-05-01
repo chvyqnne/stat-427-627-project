@@ -109,20 +109,74 @@ which.max(abs(regV2_ex_summary$cp - 1:8)) # The worst by Cp (1)
 which.min(abs(regV2_ex_summary$cp - 1:8)) # The best by Cp (8)
 names(regV2_ex_summary$which[8,][regV2_ex_summary$which[8,] == TRUE])[-1] # region, income_group, year, workplace, assets
 
-# forward selection
-step_out_V2_for <- step(regV2_null, 
-                    scope = list(lower = regV2_null, upper = regV2),
-                    method = "forward")
-
-# forward selection model minus "region" variable, which is contributing to high multicollinearity
-regV2_new <- lm(formula = expenditures ~ workplace + income_group + 
-     marriage + pay + year + parenthood + pension + assets + mobility, 
+regV2_new <- lm(formula = expenditures ~ region + income_group + workplace + year + assets, 
    data = dataV2)
+regV2_new_2 <- lm(expenditures ~ income_group + workplace + year + assets, 
+                  data = dataV2)
 
-vif(regV2_new) # all VIFs under 3
+glance(regV2)
+glance(regV2_new)
+glance(regV2_new_2)
 
 # comparing full and reduced models with partial F-test
 an_out_V2 <- anova(regV2_new, regV2)
 an_out_V2
 # Model 2 is a better fit (Full) with a significantly lower RSS than Model 1 (Reduced)
 
+
+
+# REGRESSION WITH TOTAL ARRIVALS
+
+dataV3 <- select(data, region, income_group, year, mobility, 
+                 workplace, pay, marriage, parenthood, entrepreneurship, 
+                 assets, pension, total)
+dataV3 <- drop_na(dataV3)
+regV3 <- lm(total ~ ., dataV3)
+
+vif(regV3) # high multicollinearity present with region
+
+# VARIABLE SELECTION
+# Exhaustive Search
+regV3_ex <- regsubsets(total ~ ., dataV3)
+summary(regV3_ex)
+regV3_ex_summary <- summary(regV3_ex)
+
+# ES Adjusted R Squared
+which.max(regV3_ex_summary$adjr2) # 8 var
+regV3_ex_summary$which[8,][-1] # region, income_group, workplace, pay
+
+# ES BIC
+round(regV3_ex_summary$bic,0)
+which.max(regV3_ex_summary$bic) # The worst by BIC (1)
+which.min(regV3_ex_summary$bic) # The best by BIC (8)
+regV3_ex_summary$which[8,][regV3_ex_summary$which[8,] == TRUE][-1] # region, income_group, workplace, pay, year, assets
+
+# ES Mallows CP
+round(regV3_ex_summary$cp, 2)
+which.max(abs(regV3_ex_summary$cp - 1:8)) # The worst by Cp (1)
+which.min(abs(regV3_ex_summary$cp - 1:8)) # The best by Cp (8)
+names(regV3_ex_summary$which[8,][regV3_ex_summary$which[8,] == TRUE])[-1] # region, income_group, pay, workplace, assets
+
+regV3_new <- lm(formula = total ~ region + income_group + workplace + pay + assets, 
+                data = dataV3)
+vif(regV3_new)
+# comparing full and reduced models with partial F-test
+an_out_V3 <- anova(regV3_new, regV3)
+an_out_V3
+
+print(glance(regV3))
+print(glance(regV3_new))
+
+plot(regV3, which = 1)
+plot(regV3_new, which = 1)
+
+residuals <- resid(regV3_new)
+plot(dataV3$total, residuals, xlab = "Tourism Arrivals", ylab = "Residuals", main = "Residual Plot for Reduced Model") +
+  abline(h = 0, col = "red")
+  
+residuals2 <- resid(regV3)
+plot(dataV3$total, residuals2, xlab = "Tourism Arrivals", ylab = "Residuals", main = "Residual Plot for Full Model") +
+  abline(h = 0, col = "red")
+
+plot(dataV3)
+plot(regV3)
